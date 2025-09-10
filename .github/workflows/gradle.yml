@@ -54,7 +54,7 @@ jobs:
 
       - name: Copy JAR to server
         run: |
-          scp ./artifacts/*.jar ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/toy-backend/app.jar
+          scp ./artifacts/*.jar ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/toy-backend/toy-backend.jar
 
       - name: Restart app on server
         run: |
@@ -65,11 +65,11 @@ jobs:
           
             # 새 앱 시작
             cd /home/${{ secrets.SSH_USER }}/toy-backend
-            nohup java -jar app.jar > app.log 2>&1 &
+            nohup java -jar toy-backend.jar > app.log 2>&1 &
           
             # 프로세스 시작 확인
             sleep 10
-            if pgrep -f 'java -jar.*app.jar' > /dev/null; then
+            if pgrep -f 'java -jar.*toy-backend.jar' > /dev/null; then
               echo "Application started successfully"
             else
               echo "Failed to start application"
