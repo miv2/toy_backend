@@ -56,38 +56,32 @@ jobs:
         run: |
           scp ./artifacts/*.jar ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/toy-backend/toy-backend.jar
           
-          # 3. 서버에서 앱 재시작 (더욱 안정적인 스크립트)
-          - name: Restart app on server
-            uses: appleboy/ssh-action@master
-            with:
-              host: ${{ secrets.SERVER_IP }}
-              username: ${{ secrets.SSH_USER }}
-              key: ${{ secrets.SSH_PRIVATE_KEY }}
-              script: |
-                cd /home/${{ secrets.SSH_USER }}/toy-backend
-
-                # 기존 프로세스 종료
-                pkill -f 'java -jar.*toy-backend' || true
-                sleep 5
-
-                # 가장 최근에 업로드된 JAR 파일의 이름을 동적으로 찾기
-                JAR_FILE=$(ls -t toy-backend-*.jar | head -n 1)
-                echo "Found latest JAR: $JAR_FILE"
-
-                # 새 앱 시작
-                echo "Starting $JAR_FILE..."
-                nohup java -jar $JAR_FILE > app.log 2>&1 &
-
-                # 프로세스 시작 확인 (대기 시간 증가 및 실패 시 로그 출력)
-                echo "Waiting 20 seconds for app to start..."
-                sleep 20
-
-                if pgrep -f "$JAR_FILE" > /dev/null; then
-                  echo "✅ Application started successfully!"
-                else
-                  echo "❌ Failed to start application."
-                  echo "--- Displaying logs from app.log ---"
-                  # 실패 원인을 파악하기 위해 서버의 로그 파일을 출력합니다.
-                  tail -n 30 app.log
-                  exit 1
-                fi
+      - name: Restart app on server
+        uses: appleboy/ssh-action@master
+        with:
+            host: ${{ secrets.SERVER_IP }}
+            username: ${{ secrets.SSH_USER }}
+            key: ${{ secrets.SSH_PRIVATE_KEY }}
+            script: |
+              cd /home/${{ secrets.SSH_USER }}/toy-backend
+              
+              pkill -f 'java -jar.*toy-backend' || true
+              sleep 5
+              
+              JAR_FILE=$(ls -t toy-backend-*.jar | head -n 1)
+              echo "Found latest JAR: $JAR_FILE"
+              
+              echo "Starting $JAR_FILE..."
+              nohup java -jar $JAR_FILE > app.log 2>&1 &
+              
+              echo "Waiting 20 seconds for app to start..."
+              sleep 20
+              
+              if pgrep -f "$JAR_FILE" > /dev/null; then
+                echo "✅ Application started successfully!"
+              else
+                echo "❌ Failed to start application."
+                echo "--- Displaying logs from app.log ---"
+                tail -n 30 app.log
+                exit 1
+              fi
