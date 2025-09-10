@@ -17,7 +17,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       - name: Build with Gradle
-        uses: gradle/gradle-build-action@v4
+        uses: gradle/gradle-build-action@af1da67850ed9a4cedd57bfd976089dd991e2582
         with:
           arguments: build
       - name: Upload artifact
@@ -33,8 +33,8 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: toy-backend   # ✅ 수정
-          path: ./            # ✅ JAR 저장 위치
+          name: toy-backend
+          path: build/libs/*.jar
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.4
@@ -42,9 +42,9 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Copy JAR to server
-        run: scp *.jar ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/cicd/app.jar
+        run: scp *.jar ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/toy-backend/app.jar
 
       - name: Restart app on server
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "pkill -f 'java -jar' || true"
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "nohup java -jar /home/${{ secrets.SSH_USER }}/cicd/app.jar > /home/${{ secrets.SSH_USER }}/cicd/app.log 2>&1 &"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "nohup java -jar /home/${{ secrets.SSH_USER }}/toy-backend/app.jar > /home/${{ secrets.SSH_USER }}/toy-backend/app.log 2>&1 &"
