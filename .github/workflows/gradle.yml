@@ -54,25 +54,9 @@ jobs:
 
       - name: Copy JAR to server
         run: |
-          scp ./artifacts/*.jar ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/toy-backend/toy-backend.jar
+          scp ./artifacts/*.jar ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/toy-backend
           
-      - name: Restart app on server
+      - name: Execute remote commands
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            # 기존 프로세스 종료
-            pkill -f 'java -jar.*toy-backend' || true
-            sleep 5
-          
-            # 새 앱 시작
-            cd /home/${{ secrets.SSH_USER }}/toy-backend
-            nohup java -jar toy-backend.jar > app.log 2>&1 &
-          
-            # 프로세스 시작 확인
-            sleep 10
-            if pgrep -f 'java -jar.*toy-backend.jar' > /dev/null; then
-              echo "Application started successfully"
-            else
-              echo "Failed to start application"
-              exit 1
-            fi
-          EOF
+          ssh -v ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "sudo fuser -k 8081/tcp || true"
+          ssh -v ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "sudo nohup /home/user/.sdkman/candidates/java/current/bin/java -jar ~/toy-backend/*.jar  > ~/toy-backend/nohup.log 2>&1 &"
