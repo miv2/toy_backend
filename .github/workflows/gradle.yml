@@ -6,28 +6,25 @@ on:
   pull_request:
     branches: [ "main" ]
 
-permissions:
-    contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-    - name: Build with Gradle
-      uses: gradle/gradle-build-action@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
-      with:
-        arguments: build
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: toy-backend
-        path: build/libs/*.jar
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Build with Gradle
+        uses: gradle/gradle-build-action@v4
+        with:
+          arguments: build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: toy-backend
+          path: build/libs/*.jar
 
   deploy:
     needs: build
@@ -36,14 +33,18 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
-          name: Steup SSH
+          name: toy-backend   # ✅ 수정
+          path: ./            # ✅ JAR 저장 위치
+
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - name: SCP transfer
-        run: scp *.jar ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:~/cicd
-      - name: Execute remote commands
+
+      - name: Copy JAR to server
+        run: scp *.jar ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/cicd/app.jar
+
+      - name: Restart app on server
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "sudo fuser -k 8081/tcp"
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "sudo nohup java -jar ~/cicd/*.jar &"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "pkill -f 'java -jar' || true"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "nohup java -jar /home/${{ secrets.SSH_USER }}/cicd/app.jar > /home/${{ secrets.SSH_USER }}/cicd/app.log 2>&1 &"
