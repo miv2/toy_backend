@@ -56,7 +56,7 @@ jobs:
         run: |
           scp ./artifacts/*.jar ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/toy-backend
           
-      - name: Execute remote commands
-        run: |
-          ssh -v ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "fuser -k 8081/tcp || true"
-          ssh -v ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "nohup /usr/bin/java -jar ~/toy-backend/*.jar  > ~/toy-backend/nohup.log 2>&1 &"
+#      - name: Execute remote commands
+#        run: |
+#          ssh -v ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "fuser -k 8081/tcp || true"
+#          ssh -v ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} "nohup /usr/bin/java -jar ~/toy-backend/*.jar  > ~/toy-backend/nohup.log 2>&1 &"
